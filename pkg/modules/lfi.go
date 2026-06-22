@@ -67,7 +67,7 @@ func ScanLFI(client *http.Client, cfg *core.Config, target core.CrawlResult) []c
 			fmt.Printf("    \033[90m[lfi-get] param=%s\033[0m\n", param)
 		}
 
-		baseline, _, _ := core.DoGET(client, cfg, target.URL)
+		baseline, _, err := core.DoGET(client, cfg, target.URL); if err != nil || baseline == "" { continue }
 
 		// ── LFI ──────────────────────────────────────────────────────────
 	LFILoop:
@@ -170,10 +170,14 @@ func ScanLFI(client *http.Client, cfg *core.Config, target core.CrawlResult) []c
 		for _, inp := range form.Inputs {
 			// LFI in forms
 			var baseline string
+			var baseErr error
 			if form.Method == "POST" {
-				baseline, _, _ = core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
+				baseline, _, baseErr = core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
 			} else {
-				baseline, _, _ = core.DoGET(client, cfg, form.Action)
+				baseline, _, baseErr = core.DoGET(client, cfg, form.Action)
+			}
+			if baseErr != nil || baseline == "" {
+				continue
 			}
 
 		LFIFormLoop:

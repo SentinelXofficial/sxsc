@@ -156,7 +156,7 @@ func ScanSSRF(client *http.Client, cfg *core.Config, target core.CrawlResult) []
 			fmt.Printf("    \033[90m[ssrf-get] param=%s\033[0m\n", param)
 		}
 
-		baseline, _, _ := core.DoGET(client, cfg, target.URL)
+		baseline, _, err := core.DoGET(client, cfg, target.URL); if err != nil || baseline == "" { continue }
 
 	SSRFURLLoop:
 		for _, probe := range ssrfProbes {
@@ -227,10 +227,14 @@ func ScanSSRF(client *http.Client, cfg *core.Config, target core.CrawlResult) []
 			}
 
 			var baseline string
+			var baseErr error
 			if form.Method == "POST" {
-				baseline, _, _ = core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
+				baseline, _, baseErr = core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
 			} else {
-				baseline, _, _ = core.DoGET(client, cfg, form.Action)
+				baseline, _, baseErr = core.DoGET(client, cfg, form.Action)
+			}
+			if baseErr != nil || baseline == "" {
+				continue
 			}
 
 		SSRFFormLoop:

@@ -70,7 +70,7 @@ func ScanCmdInjection(client *http.Client, cfg *core.Config, target core.CrawlRe
 		if cfg.Verbose {
 			fmt.Printf("    \033[90m[cmdi-get] param=%s\033[0m\n", param)
 		}
-		baseline, _, _ := core.DoGET(client, cfg, target.URL)
+		baseline, _, err := core.DoGET(client, cfg, target.URL); if err != nil || baseline == "" { continue }
 
 		// Response-based
 	CMDiURLResp:
@@ -145,10 +145,14 @@ func ScanCmdInjection(client *http.Client, cfg *core.Config, target core.CrawlRe
 
 			// Baseline for this form
 			var baseline string
+			var baseErr error
 			if form.Method == "POST" {
-				baseline, _, _ = core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
+				baseline, _, baseErr = core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
 			} else {
-				baseline, _, _ = core.DoGET(client, cfg, form.Action)
+				baseline, _, baseErr = core.DoGET(client, cfg, form.Action)
+			}
+			if baseErr != nil || baseline == "" {
+				continue
 			}
 
 			// Response-based
