@@ -5,6 +5,7 @@ package bundle
 
 import (
 	"archive/zip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -199,7 +200,23 @@ func safeFilename(s string) string {
 }
 
 func toJSON(p *Pack) string {
-	// Simplified inline JSON
-	return fmt.Sprintf(`{"target":"%s","date":"%s","total":%d,"critical":%d,"high":%d,"medium":%d}`,
-		p.Target, p.Date.Format(time.RFC3339), p.Stats.Total, p.Stats.Critical, p.Stats.High, p.Stats.Medium)
+	b, err := json.Marshal(struct {
+		Target   string `json:"target"`
+		Date     string `json:"date"`
+		Total    int    `json:"total"`
+		Critical int    `json:"critical"`
+		High     int    `json:"high"`
+		Medium   int    `json:"medium"`
+	}{
+		Target:   p.Target,
+		Date:     p.Date.Format(time.RFC3339),
+		Total:    p.Stats.Total,
+		Critical: p.Stats.Critical,
+		High:     p.Stats.High,
+		Medium:   p.Stats.Medium,
+	})
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }

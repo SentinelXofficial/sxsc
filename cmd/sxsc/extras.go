@@ -98,11 +98,11 @@ func runInteract() {
 	scanner.Scan()
 	outFile := strings.TrimSpace(scanner.Text())
 	if outFile == "" { outFile = "results.json" }
-	args := []string{os.Args[0], "-u", target}
-	if cookie != "" { args = append(args, "--cookie", cookie) }
-	if depth == "full" { args = append(args, "--crawl", "--all") }
-	args = append(args, "--json-output", outFile)
-	fmt.Printf("\n[interact] Configured: %s\n\n", strings.Join(args, " "))
+	fmt.Printf("\n[interact] Configured. Run manually:\n")
+	fmt.Printf("  sxsc -u %s", target)
+	if cookie != "" { fmt.Printf(" --cookie %s", cookie) }
+	if depth == "full" { fmt.Printf(" --crawl --all") }
+	fmt.Printf(" --json-output %s\n\n", outFile)
 }
 
 func runSARIF(results []core.ScanResult, sarifVer, sarifPath string) {
@@ -175,8 +175,6 @@ func countSev(results []core.ScanResult, sev string) int {
 	}
 	return n
 }
-
-func defaultStr(a, b string) string { if a != "" { return a }; return b }
 
 func or(a, b string) string { if a != "" { return a }; return b }
 

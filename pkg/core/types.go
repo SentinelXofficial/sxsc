@@ -95,6 +95,7 @@ type Config struct {
 	Breach bool // --breach  : probe OAuth + SAML misconfigurations
 	Grpc   bool // --grpc    : probe gRPC reflection + REST gateway
 	Strobe bool // --strobe  : full adaptive deep-dive pipeline
+	Snipe  bool // --snipe   : all modules attack single endpoint simultaneously
 }
 
 type ScanResult struct {
@@ -161,8 +162,12 @@ func NewHTTPClient(cfg *Config) *http.Client {
 			transport.Proxy = http.ProxyURL(pu)
 		}
 	}
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = 15 // default 15s
+	}
 	return &http.Client{
-		Timeout:   time.Duration(cfg.Timeout) * time.Second,
+		Timeout:   time.Duration(timeout) * time.Second,
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {

@@ -160,7 +160,7 @@ func main() {
 	// Sprint Sniper — auto-validate, escalate, rank
 	proveFlag       := flag.Bool("prove", false, "Auto-validate findings with concrete proof extraction")
 	dashFlag        := flag.Bool("live", false, "Live TUI dashboard during scan")
-	_              = flag.Bool("snipe", false, "All modules attack single endpoint simultaneously")
+	snipeFlag       := flag.Bool("snipe", false, "All modules attack single endpoint simultaneously")
 	delveFlag       := flag.Bool("delve", false, "Auto-escalate: walk IDs, dump tables, extract metadata")
 	primeFlag       := flag.Bool("prime", false, "Extract credentials + secrets from responses")
 	tallyFlag       := flag.Bool("rank", false, "Score findings by confidence, exploitability, data leak")
@@ -327,6 +327,11 @@ Examples:
 			*smugglingFlag = true
 			*rateLimitTestFlag = true
 			*subTakeoverFlag = true
+			// Sprint B
+			*clutchFlag = true
+			*breachFlag = true
+			*grpcFlag = true
+			*strobeFlag = true
 	}
 
 	if *threads < 1 {
@@ -446,6 +451,7 @@ Examples:
 			Breach: *breachFlag,
 			Grpc:   *grpcFlag,
 			Strobe: *strobeFlag,
+			Snipe:  *snipeFlag,
 	}
 
 	// Initialise global rate limiter if requested
@@ -575,7 +581,7 @@ Examples:
 	}
 
 	// ── Sprint 7: Deep-dive engines — roster/sieve/forge/merge ─────────
-	if *deepFlag { *rosterFlag = true; *sieveFlag = true; *forgeFlag = true; *mergeFlag = true; *chainFlag = true }
+	if *deepFlag || *strobeFlag { *rosterFlag = true; *sieveFlag = true; *forgeFlag = true; *mergeFlag = true; *chainFlag = true }
 	deepClient := core.NewHTTPClient(cfg)
 
 	// Roster: build attack surface map before scanning
@@ -1004,6 +1010,8 @@ func scanTarget(client *http.Client, cfg *core.Config, target string, useRobots 
 				local = append(local, modules.ScanSmuggling(client, cfg, t)...)
 			}
 			if cfg.CachePoison {
+				local = append(local, modules.ScanCachePoison(client, cfg, t)...)
+			}
 			// Sprint B
 			if cfg.Clutch {
 				local = append(local, runClutch(client, cfg, t)...)
@@ -1013,8 +1021,6 @@ func scanTarget(client *http.Client, cfg *core.Config, target string, useRobots 
 			}
 			if cfg.Grpc {
 				local = append(local, runGrpc(client, cfg, t)...)
-			}
-				local = append(local, modules.ScanCachePoison(client, cfg, t)...)
 			}
 
 			// ── Checkpoint: persist this URL's results ─────────────────
