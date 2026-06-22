@@ -1,6 +1,6 @@
 package version
 
 const (
-	Current = "v1.0.6"
+	Current = "v1.0.7"
 	Repo    = "SentinelXofficial/sxsc"
 )
