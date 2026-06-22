@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"sync"
-	"time"
 )
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -128,8 +126,7 @@ func proveSSRF(client *http.Client, rawURL, param, payload string) *Verdict {
 			strings.Contains(body, "security-credentials") || strings.Contains(body, "computeMetadata")) {
 			v.Confirmed = true
 			v.Confidence = 98
-			v.Proof = fmt.Sprintf("cloud metadata extracted via SSRF (%d bytes)", len(body))
-			v.Proof = extractFirstLine(body)
+			v.Proof = fmt.Sprintf("cloud metadata: %s (%d bytes)", extractFirstLine(body), len(body))
 			v.Method = "metadata_extraction"
 			return v
 		}
@@ -351,7 +348,10 @@ func coreSetParam(rawURL, param, value string) (string, error) {
 }
 
 func coreDoGET(client *http.Client, rawURL string) (string, int, error) {
-	req, _ := http.NewRequest("GET", rawURL, nil)
+	req, err := http.NewRequest("GET", rawURL, nil)
+	if err != nil {
+		return "", 0, err
+	}
 	req.Header.Set("User-Agent", "sxsc-prove/1.0")
 	resp, err := client.Do(req)
 	if err != nil {
@@ -363,6 +363,3 @@ func coreDoGET(client *http.Client, rawURL string) (string, int, error) {
 }
 
 // ── Utilities ────────────────────────────────────────────────────────────
-var _ = sync.Mutex{}
-var _ = time.Now
-var _ = regexp.MustCompile
