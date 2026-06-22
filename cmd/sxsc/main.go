@@ -179,27 +179,27 @@ func main() {
 	hookTarget      := flag.String("hook-target", "", "Override target name in webhook notification")
 
 	// ── Misc ─────────────────────────────────────────────────────────────────
-	updateFlag := flag.Bool("update", false, "Update sxsc to latest version")
+	updateFlag := flag.Bool("update", false, "Update sxvwb to latest version")
 	versionFlag := flag.Bool("version", false, "Print version and exit")
 
 	flag.Usage = func() {
-		fmt.Println("Usage: sxsc -u <URL> [OPTIONS]")
+		fmt.Println("Usage: sxvwb -u <URL> [OPTIONS]")
 		fmt.Println()
 		flag.PrintDefaults()
 		fmt.Println(`
 Examples:
-  sxsc -u "http://target.com/page?id=1"
-  sxsc -u "http://target.com" --crawl --depth 3 --waf-bypass
-  sxsc -u "http://target.com" --crawl --ws -o report.html
-  sxsc -u "http://target.com" --all --html-output report.html --json-output r.json
-  sxsc -u "http://target.com" --sql-only --blind --proxy http://127.0.0.1:8080
-  sxsc -l targets.txt --all --json-output results.json --list-concurrency 5
-  sxsc -u "http://target.com" -H "Authorization: Bearer xxx" -H "X-Api-Key: yyy"
-  sxsc -u "http://target.com" --jwt --cookie "session=abc; token=ey..."
-  sxsc -u "http://target.com" --graphql --idor --file-upload
-  sxsc -u "http://target.com" --all --checkpoint state.json
-  sxsc -u "http://target.com" --resume --checkpoint state.json
-  sxsc --update`)
+  sxvwb -u "http://target.com/page?id=1"
+  sxvwb -u "http://target.com" --crawl --depth 3 --waf-bypass
+  sxvwb -u "http://target.com" --crawl --ws -o report.html
+  sxvwb -u "http://target.com" --all --html-output report.html --json-output r.json
+  sxvwb -u "http://target.com" --sql-only --blind --proxy http://127.0.0.1:8080
+  sxvwb -l targets.txt --all --json-output results.json --list-concurrency 5
+  sxvwb -u "http://target.com" -H "Authorization: Bearer xxx" -H "X-Api-Key: yyy"
+  sxvwb -u "http://target.com" --jwt --cookie "session=abc; token=ey..."
+  sxvwb -u "http://target.com" --graphql --idor --file-upload
+  sxvwb -u "http://target.com" --all --checkpoint state.json
+  sxvwb -u "http://target.com" --resume --checkpoint state.json
+  sxvwb --update`)
 	}
 	flag.Parse()
 
@@ -211,7 +211,7 @@ Examples:
 
 	// ── Version ──────────────────────────────────────────────────────────────
 	if *versionFlag {
-		fmt.Println("sxsc " + version.Current)
+		fmt.Println("sxvwb " + version.Current)
 		return
 	}
 
@@ -276,6 +276,11 @@ Examples:
 		p, err := url.Parse(t)
 		if err != nil || (p.Scheme != "http" && p.Scheme != "https") {
 			fmt.Printf("[!] Invalid URL - must start with http:// or https://: %s\n", t)
+			os.Exit(1)
+		}
+		if isRestrictedDomain(p.Host) {
+			fmt.Printf("\n[!] RESTRICTED: Domain %q is NOT allowed for scanning.\n", p.Host)
+			fmt.Printf("[!] Indonesian .id TLDs and github.com are blocked by policy.\n\n")
 			os.Exit(1)
 		}
 	}
@@ -628,7 +633,7 @@ Examples:
 		params := make(map[string]string)
 		for _, s := range harvest.Spots {
 			if s.Origin == "form" && s.Shape == "string" {
-				params[s.Name] = "sxsc_merge_test"
+				params[s.Name] = "sxvwb_merge_test"
 				if len(params) >= 5 { break }
 			}
 		}
@@ -819,7 +824,7 @@ Examples:
 	if *driftFlag {
 		fmt.Println("[drift] Differential testing...")
 		driftClient := core.NewHTTPClient(cfg)
-		anoms := drift.Shift(driftClient, target, "test", "sxsc_drift_value", cfg.Headers)
+		anoms := drift.Shift(driftClient, target, "test", "sxvwb_drift_value", cfg.Headers)
 		if len(anoms) > 0 {
 			fmt.Printf("  [drift] %d Content-Type parsing anomaly found\n", len(anoms))
 		}
@@ -924,12 +929,38 @@ func scanTarget(client *http.Client, cfg *core.Config, target string, useRobots 
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, cfg.Threads)
 
+	// Progress tracking
+	var doneCount int
+	var doneMu sync.Mutex
+	totalTargets := len(targets)
+	spinner := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	si := 0
+	progressDone := make(chan struct{})
+
+	go func() {
+		tick := time.NewTicker(120 * time.Millisecond)
+		defer tick.Stop()
+		for {
+			select {
+			case <-progressDone:
+				return
+			case <-tick.C:
+				doneMu.Lock()
+				d := doneCount
+				doneMu.Unlock()
+				fmt.Printf("\r\033[K  %s Scanning... %d/%d URLs", spinner[si%len(spinner)], d, totalTargets)
+				si++
+			}
+		}
+	}()
+
 	for _, tgt := range targets {
 		wg.Add(1)
 		sem <- struct{}{}
 		go func(t core.CrawlResult) {
 			defer wg.Done()
 			defer func() { <-sem }()
+			defer func() { doneMu.Lock(); doneCount++; doneMu.Unlock() }()
 
 			// ── Resume: skip already-completed URLs ────────────────────
 			if cfg.Checkpoint.IsScanned(t.URL) {
@@ -1036,6 +1067,8 @@ func scanTarget(client *http.Client, cfg *core.Config, target string, useRobots 
 		}(tgt)
 	}
 	wg.Wait()
+	close(progressDone)
+	fmt.Printf("\r\033[K  \033[32m✓\033[0m %d URL(s) scanned\n", totalTargets)
 
 	// ── Header / cookie injection (root target only, expensive) ────────────
 	root := core.CrawlResult{URL: target}
