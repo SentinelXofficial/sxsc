@@ -14,8 +14,8 @@
 
 If you discover a security vulnerability in sxsc itself (not a vulnerability found by sxsc on a target), please report it privately:
 
-- Email: [security TBD — insert your email]
-- GitHub: Use the "Report a vulnerability" button under the Security tab of the repository
+- GitHub: Use the **"Report a vulnerability"** button under the Security tab of this repository
+- Email: **sentinelxgit@gmail.com** (for sensitive disclosures)
 
 ### What to include
 

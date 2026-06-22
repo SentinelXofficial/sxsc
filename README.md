@@ -3,7 +3,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Single-target deep-dive web vulnerability scanner. **46 packages. 79 Go files. 118 YAML blueprints. 15MB binary. 36 attack modules. 17 engines.**
+Single-target deep-dive web vulnerability scanner. **46 packages. 79 Go files. 118 YAML blueprints. 15MB binary. 36 attack modules. 19 engines.**
 
 Part of the [SentinelX](https://github.com/SentinelXofficial) ecosystem.
 
@@ -48,7 +48,7 @@ sxsc -u "http://target.com" --all --hook https://hooks.slack.com/xxx
 
 ---
 
-## Engines (17)
+## Engines (19)
 
 | Engine | Package | Purpose |
 |--------|---------|---------|
@@ -69,6 +69,8 @@ sxsc -u "http://target.com" --all --hook https://hooks.slack.com/xxx
 | Chain | `chain/` | 11 compound attack patterns |
 | Pulse | `pulse/` | Session health + auto-renewal |
 | Mirror | `mirror/` | Request/response cache + diff |
+| Sieve | `sieve/` | Parameter mining from 7 sources |
+| Forge | `forge/` | Adaptive payloads based on detected tech stack |
 
 ---
 
