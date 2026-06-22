@@ -54,3 +54,33 @@ func DetectSQLiVsBaseline(body string, bl core.BaselineResult) string {
 	}
 	return fmt.Sprintf("new error pattern(s): %s", strings.Join(found, " | "))
 }
+
+// FetchFormBaseline retrieves a safe baseline from a form submission
+// (using default/safe values, no injection payloads) so we can filter
+// out error messages that appear even without injection.
+func FetchFormBaseline(client *http.Client, cfg *core.Config, form core.Form) core.BaselineResult {
+	if form.Method == "POST" {
+		body, status, err := core.DoPOST(client, cfg, form.Action, core.FormDefaults(form))
+		if err != nil {
+			return core.BaselineResult{}
+		}
+		return core.BaselineResult{
+			Body:    body,
+			BodyLow: strings.ToLower(body),
+			Length:  len(body),
+			Status:  status,
+		}
+	}
+	// GET form: submit with default values via query string
+	u, _ := core.SetParam(form.Action, "", "1") // dummy param to keep URL valid
+	body, status, err := core.DoGET(client, cfg, u)
+	if err != nil {
+		return core.BaselineResult{}
+	}
+	return core.BaselineResult{
+		Body:    body,
+		BodyLow: strings.ToLower(body),
+		Length:  len(body),
+		Status:  status,
+	}
+}

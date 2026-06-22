@@ -61,6 +61,10 @@ func ScanSQLi(client *http.Client, cfg *core.Config, target core.CrawlResult) []
 			if cfg.Verbose {
 				fmt.Printf("    \033[90m[sqli-form] %s %s input=%s\033[0m\n", form.Method, form.Action, inp.Name)
 			}
+		bl := FetchFormBaseline(client, cfg, form)
+		if bl.BodyLow == "" && bl.Length == 0 {
+			continue
+		}
 		SQLiFormLoop:
 			for _, base := range payload.SQLiPayloads {
 				variants := []string{base}
@@ -82,7 +86,7 @@ func ScanSQLi(client *http.Client, cfg *core.Config, target core.CrawlResult) []
 					if err != nil {
 						continue
 					}
-					if ev := DetectSQLi(body); ev != "" {
+					if ev := DetectSQLiVsBaseline(body, bl); ev != "" {
 						results = append(results, core.ScanResult{
 							Type: "SQL Injection via Form", URL: form.Action,
 							Method: form.Method, Parameter: inp.Name, Payload: pld,
