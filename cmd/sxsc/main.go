@@ -183,7 +183,6 @@ func main() {
 	versionFlag := flag.Bool("version", false, "Print version and exit")
 
 	flag.Usage = func() {
-		banner.Print()
 		fmt.Println("Usage: sxsc -u <URL> [OPTIONS]")
 		fmt.Println()
 		flag.PrintDefaults()
