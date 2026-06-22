@@ -851,6 +851,8 @@ func scanTarget(client *http.Client, cfg *core.Config, target string, useRobots 
 		wafResult := modules.AutoDetectWAF(client, cfg, target)
 		if wafResult.Detected {
 			fmt.Printf("\033[33m[~] WAF Vendor   : %s (%s)\033[0m\n", wafResult.Vendor, wafResult.Evidence)
+			cfg.WAFBypass = true
+			fmt.Printf("\033[33m[~] WAF Bypass   : auto-enabled\033[0m\n")
 		} else {
 			fmt.Printf("\033[32m[✓] WAF Detect   : No WAF detected\033[0m\n")
 		}

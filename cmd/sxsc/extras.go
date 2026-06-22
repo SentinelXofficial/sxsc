@@ -21,11 +21,12 @@ import (
 )
 
 func runSync(repoFlag string) {
-	fmt.Printf("  [sync] Pulling blueprints from community...\n")
-	if repoFlag != "" {
-		fmt.Printf("  [sync] Custom source: %s\n", repoFlag)
+	repo := repoFlag
+	if repo == "" {
+		repo = "https://github.com/SentinelXofficial/sxsc-templates"
 	}
-	fmt.Printf("  [sync] Done — requires published blueprint repository.\n")
+	fmt.Printf("  [sync] Pulling blueprints from %s...\n", repo)
+	fmt.Printf("  [sync] Blueprint repository not yet published — skipped.\n")
 }
 
 func runDiff(diffArgs string) {
@@ -238,4 +239,22 @@ func runGrpc(client *http.Client, cfg *core.Config, t core.CrawlResult) []core.S
 		})
 	}
 	return results
+}
+
+// ── Domain Restrictions ─────────────────────────────────────────────────
+
+var blockedDomains = []string{
+	".co.id", ".go.id", ".ac.id", ".sch.id", ".mil.id", ".or.id",
+	".net.id", ".web.id", ".my.id", ".biz.id", ".desa.id", ".ponpes.id",
+	".id", "github.com",
+}
+
+func isRestrictedDomain(host string) bool {
+	host = strings.ToLower(host)
+	for _, blocked := range blockedDomains {
+		if strings.HasSuffix(host, blocked) || host == strings.TrimPrefix(blocked, ".") {
+			return true
+		}
+	}
+	return false
 }
