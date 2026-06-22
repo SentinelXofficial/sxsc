@@ -21,3 +21,5 @@ result*.json
 
 # Dependencies (managed by go.mod)
 vendor/
+.claude/
+sxsc_checksums.txt

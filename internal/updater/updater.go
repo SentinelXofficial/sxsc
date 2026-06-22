@@ -64,7 +64,7 @@ func Update() {
 		os.Exit(1)
 	}
 	fmt.Printf(color.GRY+"  [INF] Updating sxsc to %s..."+color.RST+"\n", latest)
-	cmd := exec.Command("go", "install", "github.com/"+version.Repo+"@"+latest)
+	cmd := exec.Command("go", "install", "github.com/"+version.Repo+"/cmd/sxsc@"+latest)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
