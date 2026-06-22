@@ -1,0 +1,4 @@
+# One target URL per line. Blank lines and lines starting with '#' are ignored.
+# Example usage: sxsc -l targets.example.txt --all --json-output results.json
+http://testphp.vulnweb.com/listproducts.php?cat=1
+http://testphp.vulnweb.com/artists.php?artist=1

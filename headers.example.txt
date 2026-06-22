@@ -1,0 +1,5 @@
+# One "Header: Value" per line. Blank lines and lines starting with '#' are ignored.
+# Example usage: sxsc -u "http://target.com/api" --headers-file headers.example.txt
+Authorization: Bearer REPLACE_ME
+X-Api-Key: REPLACE_ME
+X-Tenant-Id: 1
